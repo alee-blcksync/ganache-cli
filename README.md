@@ -1,10 +1,14 @@
+<p align="center">
+  <em>NOTICE</em>: <code>testrpc</code> is now <code>ganache-cli</code>. Use it just as you would <code>testrpc</code>.
+</p>
+<hr/>
+
 [![npm](https://img.shields.io/npm/v/ganache-cli.svg)]()
 [![npm](https://img.shields.io/npm/dm/ganache-cli.svg)]()
-[![Build Status](https://travis-ci.org/trufflesuite/ganache-cli.svg?branch=master)](https://travis-ci.org/trufflesuite/ganache-cli)
-*NOTICE*: `testrpc` is now `ganache-cli`. Use it just as you would `testrpc`.
+[![Build Status](https://travis-ci.org/trufflesuite/ganache-cli.svg?branch=master)](https://travis-ci.org/trufflesuite/ganache-cli)  
 
 <p align="center">
-  <img src="https://github.com/ethereumjs/testrpc/blob/ganache-cli/resources/icons/ganache-cli-128x128.png?raw=true">
+  <img src="/resources/icons/ganache-cli-128x128.png">
 </p>
 
 ## Welcome to Ganache CLI
@@ -18,11 +22,21 @@ If you came here expecting to find the TestRPC, you're in the right place! Truff
 
 ### Installation
 
-`ganache-cli` is written in Javascript and distributed as a Node package via `npm`. Make sure you have Node.js (>= v6.11.5) installed.
+`ganache-cli` is written in JavaScript and distributed as a Node.js package via `npm`. Make sure you have Node.js (>= v6.11.5) installed.
+
+Using npm:
 
 ```Bash
 npm install -g ganache-cli
 ```
+
+or, if you are using [Yarn](https://yarnpkg.com/):
+
+```Bash
+yarn global add ganache-cli
+```
+
+`ganache-cli` utilizes [`ganache-core`](https://github.com/trufflesuite/ganache-core) internally, which is distributed with optional native dependencies for increased performance. If these native dependencies fail to install on your system `ganache-cli` will automatically fallback to `ganache-core`’s pre-bundled JavaScript build.
 
 Having problems? Be sure to check out the [FAQ](https://github.com/trufflesuite/ganache-cli/wiki/FAQ) and if you're still having issues and you're sure its a problem with `ganache-cli` please open an issue.
 
@@ -52,11 +66,14 @@ Options:
 * `--db`: Specify a path to a directory to save the chain database. If a database already exists, ganache-cli will initialize that chain instead of creating a new one.
 * `--debug`: Output VM opcodes for debugging
 * `--mem`: Output ganache-cli memory usage statistics. This replaces normal output.
+* `-q` or `--quiet`: Run ganache-cli without any logs.
 * `-v` or `--verbose`: Log all requests and responses to stdout
 * `-?` or `--help`: Display help information
 * `--version`: Display the version of ganache-cli
 * `--noVMErrorsOnRPCResponse`: Do not transmit transaction failures as RPC errors. Enable this flag for error reporting behaviour which is compatible with other clients such as geth and Parity.
-* `--allowUnlimitedContractSize`: Allows unlimited contract sizes while debugging. By enabling this flag, the check within the EVM for contract size limit of 2KB (see EIP-170) is bypassed. Enabling this flag **will** cause ganache-cli to behave differently than production environments.
+* `--allowUnlimitedContractSize`: Allows unlimited contract sizes while debugging. By enabling this flag, the check within the EVM for contract size limit of 24KB (see EIP-170) is bypassed. Enabling this flag **will** cause ganache-cli to behave differently than production environments.
+* `--keepAliveTimeout`: Sets the HTTP server's `keepAliveTimeout` in milliseconds. See the [NodeJS HTTP docs](https://nodejs.org/api/http.html#http_server_keepalivetimeout) for details. `5000` by default.
+* `-t` or `--time`: Date (ISO 8601) that the first block should start. Use this feature, along with the evm_increaseTime method to test time-dependent code.
 
 Special Options:
 
@@ -86,18 +103,25 @@ Special Options:
 
 #### Library
 
-As a Web3 provider:
+As a [Web3](https://github.com/ethereum/web3.js/) provider:
 
 ```javascript
-var ganache = require("ganache-cli");
+const ganache = require("ganache-cli");
 web3.setProvider(ganache.provider());
 ```
 
-As a general http server:
+As an [ethers.js](https://github.com/ethers-io/ethers.js/) provider:
 
 ```javascript
-var ganache = require("ganache-cli");
-var server = ganache.server();
+const ganache = require("ganache-cli");
+const provider = new ethers.providers.Web3Provider(ganache.provider());
+```
+
+As a general HTTP and WebSocket server:
+
+```javascript
+const ganache = require("ganache-cli");
+const server = ganache.server();
 server.listen(port, function(err, blockchain) {...});
 ```
 
@@ -105,6 +129,7 @@ Both `.provider()` and `.server()` take a single object which allows you to spec
 
 * `"accounts"`: `Array` of `Object`'s. Each object should have a balance key with a hexadecimal value. The key `secretKey` can also be specified, which represents the account's private key. If no `secretKey`, the address is auto-generated with the given balance. If specified, the key is used to determine the account's address.
 * `"debug"`: `boolean` - Output VM opcodes for debugging
+* `"blockTime"`: `number` - Specify blockTime in seconds for automatic mining. If you don't specify this flag, ganache will instantly mine a new block for every transaction. Using the `blockTime` option is discouraged unless you have tests which require a specific mining interval.
 * `"logger"`: `Object` - Object, like `console`, that implements a `log()` function.
 * `"mnemonic"`: Use a specific HD wallet mnemonic to generate initial addresses.
 * `"port"`: Port number to listen on when running as a server.
@@ -118,7 +143,8 @@ Both `.provider()` and `.server()` take a single object which allows you to spec
 * `"db_path"`: `String` - Specify a path to a directory to save the chain database. If a database already exists, `ganache-cli` will initialize that chain instead of creating a new one.
 * `"account_keys_path"`: `String` - Specifies a file to save accounts and private keys to, for testing.
 * `"vmErrorsOnRPCResponse"`: `boolean` - Whether or not to transmit transaction failures as RPC errors. Set to `false` for error reporting behaviour which is compatible with other clients such as geth and Parity.
-* `"allowUnlimitedContractSize"`: `boolean` - Allows unlimited contract sizes while debugging. By setting this to `true`, the check within the EVM for contract size limit of 2KB (see [EIP-170](https://git.io/vxZkK)) is bypassed. Setting this to true **will** cause ganache-core to behave differently than production environments. (default: `false`; **ONLY** set to `true` during debugging).
+* `"allowUnlimitedContractSize"`: `boolean` - Allows unlimited contract sizes while debugging. By setting this to `true`, the check within the EVM for contract size limit of 24KB (see [EIP-170](https://git.io/vxZkK)) is bypassed. Setting this to true **will** cause ganache-core to behave differently than production environments. (default: `false`; **ONLY** set to `true` during debugging).
+* `"keepAliveTimeout"`: Sets the HTTP server's `keepAliveTimeout` in milliseconds. See the [NodeJS HTTP docs](https://bit.ly/2Cr0ZEh) for details. `5000` by default.
 
 ### Implemented Methods
 
@@ -198,23 +224,43 @@ the run command:
 
 ```Bash
 docker run -d -p 8545:8545 trufflesuite/ganache-cli:latest -a 10 --debug
+                                                           ^^^^^^^^^^^^^
 ```
 
 The Docker container adds an environment variable `DOCKER=true`; when this variable is set to `true` (case insensitive), `ganache-cli` use a default hostname IP of `0.0.0.0` instead of the normal default `127.0.0.1`. You can still specify a custom hostname however:
 
 ```Bash
 docker run -d -p 8545:8545 trufflesuite/ganache-cli:latest -h XXX.XXX.XXX.XXX
+                                                           ^^^^^^^^^^^^^^^^^^
 ```
 
-To build the Docker container from source:
+To build and run the Docker container from source:
 
 ```Bash
 git clone https://github.com/trufflesuite/ganache-cli.git && cd ganache-cli
+```
+then:
+```Bash
 docker build -t trufflesuite/ganache-cli .
+docker run -p 8545:8545 trufflesuite/ganache-cli
+```
+or
+```Bash
+npm run docker
 ```
 
 
 ### Contributing to Ganache CLI
 
-This is a distribution package where the core code is bundled to support browsers and reduce installation issues on all platforms. You can contribute to the core code via [ganache-core](https://github.com/trufflesuite/ganache-core).
+The Ganache CLI repository contains the cli logic and Docker config/build only. It utilizes [ganache-core](https://github.com/trufflesuite/ganache-core), the core logic powering [Ganache](https://github.com/trufflesuite/ganache), internally.
 
+You can contribute to the core code at [ganache-core](https://github.com/trufflesuite/ganache-core).
+
+To contribue to ganache-cli, run:
+
+```Bash
+git clone https://github.com/trufflesuite/ganache-cli.git && cd ganache-cli
+npm install
+```
+
+You'll need Python 2.7 installed, and on Windows, you'll likely need to install [windows-build-tools](https://github.com/felixrieseberg/windows-build-tools) from an Administrator PowerShell Prompt via `npm install --global windows-build-tools`.
